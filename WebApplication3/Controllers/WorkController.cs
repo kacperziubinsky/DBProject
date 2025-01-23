@@ -187,5 +187,67 @@ namespace WebApplication3.Controllers
                 }
             }
         }
+
+
+        [HttpGet("most-costly/{projectName}")]
+        public IActionResult GetMostCostlyUser(string projectName)
+        {
+            workProject result = null;
+
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                string query = @"
+            SELECT 
+                u.firstName,
+                u.lastName,
+                SUM(w.hours) AS totalHours,
+                p.projectName
+            FROM 
+                Work w
+            JOIN 
+                Users u ON w.UserId = u.userID
+            JOIN 
+                Tasks t ON w.taskID = t.taskID
+            JOIN 
+                Projects p ON t.projectID = p.projectID
+            WHERE 
+                p.projectName = @projectName
+            GROUP BY 
+                u.userID, u.firstName, u.lastName, p.projectName
+            ORDER BY 
+                totalHours DESC
+            LIMIT 1;";
+        
+                MySqlCommand command = new MySqlCommand(query, connection);
+                command.Parameters.AddWithValue("@projectName", projectName);
+
+                connection.Open();
+
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        result = new workProject()
+                        {
+                            firstName = reader.GetString("firstName"),
+                            lastName = reader.GetString("lastName"),
+                            hours = reader.GetInt32("totalHours"),
+                            projectName = reader.GetString("projectName")
+                        };
+                    }
+                }
+            }
+
+            if (result == null)
+            {
+                return NotFound(new { Message = "No user found for the specified project." });
+            }
+
+            return Ok(result);
+        }
+
+
+        
+      
     }
 }

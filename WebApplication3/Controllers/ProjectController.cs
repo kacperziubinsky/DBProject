@@ -143,23 +143,38 @@ public class ProjectController : Controller
     {
         using (MySqlConnection connection = new MySqlConnection(_connectionString))
         {
-            string query = "DELETE FROM projects WHERE projectID = @projectID";
-            MySqlCommand command = new MySqlCommand(query, connection);
-            command.Parameters.AddWithValue("@projectID", projectID);
-            connection.Open();
-            await command.ExecuteNonQueryAsync();
-            int rowsAffected = command.ExecuteNonQuery();
-            
-            if (rowsAffected > 0)
+            await connection.OpenAsync();
+        
+            string checkQuery = "SELECT COUNT(*) FROM projects WHERE projectID = @projectID";
+            using (var checkCommand = new MySqlCommand(checkQuery, connection))
             {
-                return Ok(new { Message = "User deleted successfully." });
+                checkCommand.Parameters.AddWithValue("@projectID", projectID);
+                var projectExists = Convert.ToInt32(await checkCommand.ExecuteScalarAsync()) > 0;
+
+                if (!projectExists)
+                {
+                    return NotFound(new { Message = "Project not found." });
+                }
             }
-            else
+
+            string deleteQuery = "DELETE FROM projects WHERE projectID = @projectID";
+            using (var deleteCommand = new MySqlCommand(deleteQuery, connection))
             {
-                return NotFound(new { Message = "User not found." });
+                deleteCommand.Parameters.AddWithValue("@projectID", projectID);
+                var rowsAffected = await deleteCommand.ExecuteNonQueryAsync();
+
+                if (rowsAffected > 0)
+                {
+                    return Ok(new { Message = "Project deleted successfully." });
+                }
+                else
+                {
+                    return BadRequest(new { Message = "Failed to delete project." });
+                }
             }
         }
     }
+
 
     [HttpPut]
     public async Task<ActionResult<Project>> UpdateProject(Project project)
@@ -200,5 +215,46 @@ public class ProjectController : Controller
             
         }
     }
+
+
+    [HttpGet]
+    [Route("current")]
+    public async Task<ActionResult<IEnumerable<Project>>> GetCurrentProjects()
+    {
+        var projects = new List<Project>();
+        using (MySqlConnection connection = new MySqlConnection(_connectionString))
+        {
+            string query = "SELECT * FROM projects WHERE @currentDate BETWEEN startDate AND endDate";
+            using (MySqlCommand command = new MySqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@currentDate", DateTime.UtcNow);
+                await connection.OpenAsync();
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        projects.Add(new Project
+                        {
+                            clientID = reader.GetInt32("clientID"),
+                            projectID = reader.GetInt32("projectID"),
+                            projectName = reader.GetString("projectName"),
+                            startDate = reader.GetDateTime("startDate"),
+                            endDate = reader.GetDateTime("endDate"),
+                            status = reader.GetString("status"),
+                        });
+                    }
+                }
+            }
+        }
+
+        if (projects == null || projects.Count == 0)
+        {
+            return NotFound(new { Message = "No current projects found." });
+        }
+
+        return Ok(projects);
+    }
+
 
 }

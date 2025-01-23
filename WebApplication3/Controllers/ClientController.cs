@@ -16,7 +16,6 @@ namespace WebApplication3.Controllers
             _connectionString = configuration.GetConnectionString("MySqlConnection");
         }
 
-        [Route("allClients")]
         [HttpGet]
         public IEnumerable<Client> GetClients()
         {
@@ -48,7 +47,7 @@ namespace WebApplication3.Controllers
         }
 
 
-        [Route("[controller]/{clientID}")]
+        [Route("/{clientID}")]
         [HttpGet]
         public IEnumerable<Client> GetClient(int clientID)
         {

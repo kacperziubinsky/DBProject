@@ -168,4 +168,115 @@ public class TaskController : Controller
             }
         }
     }
+    [HttpGet]
+    [Route("details/{taskID}")]
+    public async Task<ActionResult> GetTaskWithDetails(int taskID)
+    {
+        using (MySqlConnection connection = new MySqlConnection(_connectionString))
+        {
+            string query = @"
+            SELECT 
+                tasks.taskID, 
+                tasks.content, 
+                tasks.status, 
+                tasks.startDate, 
+                tasks.endDate, 
+                projects.projectName, 
+                projects.clientID 
+            FROM 
+                tasks 
+            INNER JOIN 
+                projects 
+            ON 
+                tasks.projectID = projects.projectID
+            WHERE 
+                tasks.taskID = @taskID";
+        
+            using (var command = new MySqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@taskID", taskID);
+                await connection.OpenAsync();
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        var taskDetails = new
+                        {
+                            TaskID = reader.GetInt32("taskID"),
+                            Content = reader.GetString("content"),
+                            Status = reader.GetString("status"),
+                            StartDate = reader.GetDateTime("startDate"),
+                            EndDate = reader.GetDateTime("endDate"),
+                            ProjectName = reader.GetString("projectName"),
+                            ClientID = reader.GetInt32("clientID")
+                        };
+                        return Ok(taskDetails);
+                    }
+                }
+            }
+        }
+        return NotFound(new { Message = "Task not found." });
+    }
+
+    [HttpGet]
+    [Route("overdue")]
+    public async Task<ActionResult<IEnumerable<Task>>> GetOverdueTasks()
+    {
+        var tasks = new List<Task>();
+        using (MySqlConnection connection = new MySqlConnection(_connectionString))
+        {
+            string query = "SELECT * FROM tasks WHERE endDate < NOW() AND status != 'Completed'";
+            using (var command = new MySqlCommand(query, connection))
+            {
+                await connection.OpenAsync();
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        tasks.Add(new Task
+                        {
+                            taskID = reader.GetInt32("taskID"),
+                            content = reader.GetString("content"),
+                            projectID = reader.GetInt32("projectID"),
+                            status = reader.GetString("status"),
+                            startDate = reader.GetDateTime("startDate"),
+                            endDate = reader.GetDateTime("endDate"),
+                        });
+                    }
+                }
+            }
+        }
+        return Ok(tasks);
+    }
+
+    [HttpGet]
+    [Route("groupedByStatus")]
+    public async Task<ActionResult> GetTasksGroupedByStatus()
+    {
+        using (MySqlConnection connection = new MySqlConnection(_connectionString))
+        {
+            string query = "SELECT status, COUNT(*) AS taskCount FROM tasks GROUP BY status";
+            using (var command = new MySqlCommand(query, connection))
+            {
+                await connection.OpenAsync();
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    var groupedTasks = new List<object>();
+                    while (await reader.ReadAsync())
+                    {
+                        groupedTasks.Add(new
+                        {
+                            Status = reader.GetString("status"),
+                            TaskCount = reader.GetInt32("taskCount")
+                        });
+                    }
+                    return Ok(groupedTasks);
+                }
+            }
+        }
+    }
+
 }
