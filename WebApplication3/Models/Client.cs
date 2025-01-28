@@ -1,10 +1,9 @@
-namespace WebApplication3.Models;
+﻿namespace DBProject.Models;
 
 public class Client
 {
-    public int clientID { get; set; }
-    public string name { get; set; }
-    public string industry { get; set; }
-    public string email { get; set; }
-    public string phone { get; set; }
+    public int ClientID { get; set; }
+    public string ClientName { get; set; }
+    public string ContactEmail { get; set; }
+    public string ContactPhone { get; set; }
 }

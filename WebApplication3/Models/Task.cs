@@ -1,12 +1,11 @@
-namespace WebApplication3.Models;
+﻿namespace DBProject.Models;
 
 public class Task
 {
-    public int taskID { get; set; }
-    public string content { get; set; }
-    public int projectID { get; set; }
-    public DateTime startDate { get; set; }
-    public DateTime endDate { get; set; }
-    public string status { get; set; }
-
+    public int TaskId { get; set; }
+    public string TaskName { get; set; }
+    public int ProjectId { get; set; }
+    public int AssignedTo { get; set; }
+    public string Status { get; set; }
+    public DateTime DueDate { get; set; }
 }

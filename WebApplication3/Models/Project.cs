@@ -1,11 +1,10 @@
-namespace WebApplication3.Models;
+﻿namespace DBProject.Models;
 
 public class Project
 {
-    public int projectID { get; set; }
-    public string projectName { get; set; }
-    public int clientID { get; set; }
-    public DateTime startDate { get; set; }
-    public DateTime endDate { get; set; }
-    public string status { get; set; }
+    public int ProjectID { get; set; }
+    public string ProjectName { get; set; }
+    public int DepartmentID { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
 }
