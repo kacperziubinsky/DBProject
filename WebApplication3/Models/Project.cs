@@ -1,7 +1,10 @@
-﻿namespace DBProject.Models;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace DBProject.Models;
 
 public class Project
 {
+    [Key]
     public int ProjectID { get; set; }
     public string ProjectName { get; set; }
     public int DepartmentID { get; set; }

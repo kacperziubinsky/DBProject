@@ -1,7 +1,10 @@
-﻿namespace DBProject.Models;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace DBProject.Models;
 
 public class Meeting
 {
+    [Key]
     public int MeetingID { get; set; }
     public DateTime MeetingDate { get; set; }
     public string Subject { get; set; }

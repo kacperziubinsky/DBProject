@@ -2,160 +2,48 @@
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [Route("[controller]")]
 public class MeetingController : ControllerBase
 {
-    private readonly string _connectionString;
+    private readonly DBProjectContext _context;
 
-    public MeetingController(IConfiguration configuration)
+    public MeetingController(DBProjectContext context)
     {
-        _connectionString = configuration.GetConnectionString("MySqlConnection");
+        _context = context;
     }
 
     [HttpGet]
-    public IEnumerable<Meeting> Get()
+    public async Task<ActionResult<IEnumerable<Meeting>>> GetMeetings()
     {
-        var meetings = new List<Meeting>();
-        using (MySqlConnection connection = new MySqlConnection(_connectionString))
-        {
-            string query = "SELECT * FROM Meetings";
-            MySqlCommand command = new MySqlCommand(query, connection);
-            connection.Open();
-            using (var reader = command.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    meetings.Add(new Meeting
-                    {
-                        MeetingID = reader.GetInt32("MeetingID"),
-                        MeetingDate = reader.GetDateTime("MeetingDate"),
-                        Subject = reader.GetString("Subject"),
-                        Participants = reader.GetString("Participants")
-                    });
-                }
-            }
-        }
-        return meetings;
+        return await _context.Meetings.ToListAsync();
     }
 
-    [HttpGet("{MeetingID}")]
-    public IActionResult Get(int MeetingID)
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Meeting>> GetMeeting(int id)
     {
-        Meeting meeting = null;
-        using (MySqlConnection connection = new MySqlConnection(_connectionString))
-        {
-            string query = "SELECT * FROM Meetings WHERE MeetingID = @MeetingID";
-            MySqlCommand command = new MySqlCommand(query, connection);
-            command.Parameters.AddWithValue("@MeetingID", MeetingID);
-            connection.Open();
-            using (var reader = command.ExecuteReader())
-            {
-                if (reader.Read())
-                {
-                    meeting = new Meeting
-                    {
-                        MeetingID = reader.GetInt32("MeetingID"),
-                        MeetingDate = reader.GetDateTime("MeetingDate"),
-                        Subject = reader.GetString("Subject"),
-                        Participants = reader.GetString("Participants")
-                    };
-                }
-            }
-        }
-        return meeting != null ? Ok(meeting) : NotFound();
+        var meeting = await _context.Meetings.FindAsync(id);
+        if(meeting == null) { return NotFound( new{message = "Meeting not found"} ); }
+        return meeting;
     }
 
     [HttpPost]
-    public IActionResult Post([FromBody] Meeting meeting)
+    public async Task<ActionResult<Meeting>> PostMeeting(Meeting meeting)
     {
-        using (MySqlConnection connection = new MySqlConnection(_connectionString))
-        {
-            string query = "INSERT INTO Meetings (MeetingDate, Subject, Participants) VALUES (@MeetingDate, @Subject, @Participants)";
-            MySqlCommand command = new MySqlCommand(query, connection);
-            command.Parameters.AddWithValue("@MeetingDate", meeting.MeetingDate);
-            command.Parameters.AddWithValue("@Subject", meeting.Subject);
-            command.Parameters.AddWithValue("@Participants", meeting.Participants);
-
-            connection.Open();
-            try
-            {
-                int rowsAffected = command.ExecuteNonQuery();
-                if (rowsAffected == 1)
-                {
-                    return Ok(new { Message = "Meeting added successfully." });
-                }
-                else
-                {
-                    return StatusCode(500, new { Message = "Meeting could not be added." });
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Message = "An error occurred.", Details = ex.Message });
-            }
-        }
+        _context.Meetings.Add(meeting);
+        await _context.SaveChangesAsync();
+        return meeting;
     }
 
-    [HttpPut("{MeetingID}")]
-    public IActionResult Put(int MeetingID, [FromBody] Meeting meeting)
+    [HttpDelete]
+    public async Task<ActionResult<Meeting>> DeleteMeeting(int id)
     {
-        using (MySqlConnection connection = new MySqlConnection(_connectionString))
-        {
-            string query = "UPDATE Meetings SET MeetingDate = @MeetingDate, Subject = @Subject, Participants = @Participants WHERE MeetingID = @MeetingID";
-            MySqlCommand command = new MySqlCommand(query, connection);
-            command.Parameters.AddWithValue("@MeetingID", MeetingID);
-            command.Parameters.AddWithValue("@MeetingDate", meeting.MeetingDate);
-            command.Parameters.AddWithValue("@Subject", meeting.Subject);
-            command.Parameters.AddWithValue("@Participants", meeting.Participants);
-
-            connection.Open();
-            try
-            {
-                int rowsAffected = command.ExecuteNonQuery();
-                if (rowsAffected > 0)
-                {
-                    return Ok(new { Message = "Meeting updated successfully." });
-                }
-                else
-                {
-                    return NotFound(new { Message = "Meeting not found or no changes made." });
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Message = "An error occurred.", Details = ex.Message });
-            }
-        }
-    }
-
-    [HttpDelete("{MeetingID}")]
-    public IActionResult Delete(int MeetingID)
-    {
-        using (MySqlConnection connection = new MySqlConnection(_connectionString))
-        {
-            string query = "DELETE FROM Meetings WHERE MeetingID = @MeetingID";
-            MySqlCommand command = new MySqlCommand(query, connection);
-            command.Parameters.AddWithValue("@MeetingID", MeetingID);
-
-            connection.Open();
-            try
-            {
-                int rowsAffected = command.ExecuteNonQuery();
-                if (rowsAffected > 0)
-                {
-                    return Ok(new { Message = "Meeting deleted successfully." });
-                }
-                else
-                {
-                    return NotFound(new { Message = "Meeting not found." });
-                }
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Message = "An error occurred.", Details = ex.Message });
-            }
-        }
+        var meeting = await _context.Meetings.FindAsync(id);
+        if(meeting == null) { return NotFound(new{message = "Meeting not found"} ); }
+        _context.Meetings.Remove(meeting);
+        await _context.SaveChangesAsync();
+        return Ok(new{message = "Meeting deleted"});
     }
 }

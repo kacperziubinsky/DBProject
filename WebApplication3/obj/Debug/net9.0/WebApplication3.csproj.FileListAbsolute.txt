@@ -107,3 +107,16 @@ C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\obj\Debug\net9.0\refin
 C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\obj\Debug\net9.0\WebApplication3.pdb
 C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\obj\Debug\net9.0\WebApplication3.genruntimeconfig.cache
 C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\obj\Debug\net9.0\ref\WebApplication3.dll
+C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.dll
+C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.Abstractions.dll
+C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.Relational.dll
+C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\bin\Debug\net9.0\Microsoft.Extensions.Caching.Abstractions.dll
+C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\bin\Debug\net9.0\Microsoft.Extensions.Caching.Memory.dll
+C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.dll
+C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\bin\Debug\net9.0\Microsoft.Extensions.Logging.dll
+C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\bin\Debug\net9.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\bin\Debug\net9.0\Microsoft.Extensions.Options.dll
+C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\bin\Debug\net9.0\Microsoft.Extensions.Primitives.dll
+C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\bin\Debug\net9.0\MySqlConnector.dll
+C:\Users\Kacper\RiderProjects\DBProject_1\WebApplication3\bin\Debug\net9.0\Pomelo.EntityFrameworkCore.MySql.dll

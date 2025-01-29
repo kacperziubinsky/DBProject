@@ -1,114 +1,53 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using MySql.Data.MySqlClient;
+﻿using DBProject.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
-using DBProject.Models;
+using System.Threading.Tasks;
 
-namespace DBProject.Controllers;
-
-[ApiController]
-[Route("[controller]")]
-public class LocationController : ControllerBase
+namespace DBProject.Controllers
 {
-    private readonly string _connectionString;
-
-    public LocationController(IConfiguration configuration)
+    [ApiController]
+    [Route("[controller]")]
+    public class LocationController : ControllerBase
     {
-        _connectionString = configuration.GetConnectionString("MySqlConnection");
-    }
+        private readonly DBProjectContext _context;
 
-    [HttpGet]
-    public IEnumerable<Location> Get()
-    {
-        var locations = new List<Location>();
-        using (MySqlConnection connection = new MySqlConnection(_connectionString))
+        public LocationController(DBProjectContext context)
         {
-            string query = "SELECT * FROM Locations";
-            MySqlCommand command = new MySqlCommand(query, connection);
-            connection.Open();
-            using (var reader = command.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    locations.Add(new Location
-                    {
-                        LocationID = reader.GetInt32("LocationID"),
-                        LocationName = reader.GetString("LocationName"),
-                        Address = reader.GetString("Address")
-                    });
-                }
-            }
+            _context = context;
         }
-        return locations;
-    }
 
-    [HttpGet("{LocationID}")]
-    public IActionResult Get(int LocationID)
-    {
-        Location location = null;
-        using (MySqlConnection connection = new MySqlConnection(_connectionString))
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Location>>> Get()
         {
-            string query = "SELECT * FROM Locations WHERE LocationID = @LocationID";
-            MySqlCommand command = new MySqlCommand(query, connection);
-            command.Parameters.AddWithValue("@LocationID", LocationID);
-            connection.Open();
-            using (var reader = command.ExecuteReader())
-            {
-                if (reader.Read())
-                {
-                    location = new Location
-                    {
-                        LocationID = reader.GetInt32("LocationID"),
-                        LocationName = reader.GetString("LocationName"),
-                        Address = reader.GetString("Address")
-                    };
-                }
-            }
+            return await _context.Locations.ToListAsync();
         }
-        return location != null ? Ok(location) : NotFound(new { Message = "Location not found" });
-    }
 
-    [HttpPost]
-    public IActionResult Post(Location location)
-    {
-        using (MySqlConnection connection = new MySqlConnection(_connectionString))
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Location>> Get(int id)
         {
-            string query = @"INSERT INTO Locations (LocationName, Address) VALUES (@LocationName, @Address)";
-            MySqlCommand command = new MySqlCommand(query, connection);
-            command.Parameters.AddWithValue("@LocationName", location.LocationName);
-            command.Parameters.AddWithValue("@Address", location.Address);
-            connection.Open();
-            int rowsAffected = command.ExecuteNonQuery();
-            return rowsAffected > 0 ? Ok(new { Message = "Location added successfully" }) : StatusCode(500, new { Message = "Error adding location" });
+            var location = await _context.Locations.FindAsync(id);
+            if (location == null) return NotFound(new { Message = "Location not found." });
+            return location;
         }
-    }
 
-    [HttpPut]
-    public IActionResult Put(Location location)
-    {
-        using (MySqlConnection connection = new MySqlConnection(_connectionString))
+        [HttpPost]
+        public async Task<IActionResult> Post(Location location)
         {
-            string query = @"UPDATE Locations SET LocationName = @LocationName, Address = @Address WHERE LocationID = @LocationID";
-            MySqlCommand command = new MySqlCommand(query, connection);
-            command.Parameters.AddWithValue("@LocationID", location.LocationID);
-            command.Parameters.AddWithValue("@LocationName", location.LocationName);
-            command.Parameters.AddWithValue("@Address", location.Address);
-            connection.Open();
-            int rowsAffected = command.ExecuteNonQuery();
-            return rowsAffected > 0 ? Ok(new { Message = "Location updated successfully" }) : NotFound(new { Message = "Location not found or no changes made" });
+            _context.Locations.Add(location);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction(nameof(Get), new { id = location.LocationID }, location);
         }
-    }
 
-    [HttpDelete("{LocationID}")]
-    public IActionResult Delete(int LocationID)
-    {
-        using (MySqlConnection connection = new MySqlConnection(_connectionString))
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
         {
-            string query = "DELETE FROM Locations WHERE LocationID = @LocationID";
-            MySqlCommand command = new MySqlCommand(query, connection);
-            command.Parameters.AddWithValue("@LocationID", LocationID);
-            connection.Open();
-            int rowsAffected = command.ExecuteNonQuery();
-            return rowsAffected > 0 ? Ok(new { Message = "Location deleted successfully" }) : NotFound(new { Message = "Location not found" });
+            var location = await _context.Locations.FindAsync(id);
+            if (location == null) return NotFound(new { Message = "Location not found." });
+
+            _context.Locations.Remove(location);
+            await _context.SaveChangesAsync();
+            return Ok(new { Message = "Location deleted successfully." });
         }
     }
 }
