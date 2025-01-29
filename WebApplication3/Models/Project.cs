@@ -10,4 +10,6 @@ public class Project
     public int DepartmentID { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
+    public Department Department { get; set; }
+    public ICollection<Task> Tasks { get; set; }
 }

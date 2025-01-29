@@ -1,6 +1,5 @@
 using DBProject.Models;
 using Microsoft.AspNetCore.Mvc;
-using MySql.Data.MySqlClient;
 
 namespace DBProject.Controllers;
 

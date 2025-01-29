@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MySql.Data.MySqlClient;
-using System.Collections.Generic;
 using DBProject.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,9 +22,9 @@ public class EmployeeController : ControllerBase
    }
 
    [HttpGet("{EmployeeID}")]
-   public async Task<ActionResult<Employee>> GetEmployee(int EmployeeID)
+   public async Task<ActionResult<Employee>> GetEmployee(int employeeid)
    {
-       var employee = await _context.Employees.FindAsync(EmployeeID);
+       var employee = await _context.Employees.FindAsync(employeeid);
        if (employee == null) return NotFound(new { Message = "Employee not found." });
        return employee;
    }
@@ -42,8 +40,8 @@ public class EmployeeController : ControllerBase
     
 
     [HttpDelete("{EmployeeID}")]
-    public async Task<ActionResult<Employee>> DeleteEmployee(int EmployeeID){
-        var employee = await _context.Employees.FindAsync(EmployeeID);
+    public async Task<ActionResult<Employee>> DeleteEmployee(int employeeid){
+        var employee = await _context.Employees.FindAsync(employeeid);
         if (employee == null) return NotFound(new { Message = "Employee not found." });
         
         _context.Employees.Remove(employee);

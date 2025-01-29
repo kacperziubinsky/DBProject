@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿﻿using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
-using Microsoft.Extensions.Configuration;
-using System.Collections.Generic;
 using System.Dynamic;
 
 namespace DBProject.Controllers
