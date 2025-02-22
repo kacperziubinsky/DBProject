@@ -13,4 +13,7 @@ public class Employee
     public string Phone { get; set; }
     public DateTime HireDate { get; set; }
     public Department Department { get; set; }
+    public ICollection<Task> Tasks { get; set; } 
+    
+    public Salary Salary { get; set; }
 }

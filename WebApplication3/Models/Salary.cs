@@ -9,4 +9,5 @@ public class Salary
     public int EmployeeID { get; set; }
     public decimal MonthlySalary { get; set; }
     public DateTime PaymentDate { get; set; }
+    public Employee Employee { get; set; }
 }

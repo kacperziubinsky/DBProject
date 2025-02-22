@@ -1,169 +1,102 @@
-﻿﻿using Microsoft.AspNetCore.Mvc;
-using MySql.Data.MySqlClient;
-using System.Dynamic;
+﻿using DBProject.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace DBProject.Controllers
+namespace WebApplication3.Controllers
 {
     [ApiController]
     [Route("[controller]")]
     public class CompanyController : ControllerBase
     {
-        private readonly string _connectionString;
+        private readonly DBProjectContext _context;
 
-        public CompanyController(IConfiguration configuration)
+        public CompanyController(DBProjectContext context)
         {
-            _connectionString = configuration.GetConnectionString("MySqlConnection");
+            _context = context;
         }
 
         [HttpGet("EmployeesWithDepartments")]
         public IActionResult GetEmployeesWithDepartments()
         {
-            var result = new List<dynamic>();
-
-            using (MySqlConnection connection = new MySqlConnection(_connectionString))
-            {
-                string query = @"SELECT e.EmployeeID, e.FirstName, e.LastName, d.DepartmentName 
-                                 FROM Employees e
-                                 JOIN Departments d ON e.DepartmentID = d.DepartmentID";
-
-                MySqlCommand command = new MySqlCommand(query, connection);
-                connection.Open();
-
-                using (var reader = command.ExecuteReader())
+            var employees = _context.Employees
+                .Include(e => e.Department)
+                .Select(e => new
                 {
-                    while (reader.Read())
-                    {
-                        dynamic employee = new ExpandoObject();
-                        employee.EmployeeID = reader.GetInt32("EmployeeID");
-                        employee.FirstName = reader.GetString("FirstName");
-                        employee.LastName = reader.GetString("LastName");
-                        employee.DepartmentName = reader.GetString("DepartmentName");
+                    e.EmployeeID,
+                    e.FirstName,
+                    e.LastName,
+                    e.Department.DepartmentName
+                })
+                .ToList();
 
-                        result.Add(employee);
-                    }
-                }
-            }
-            return Ok(result);
+            return Ok(employees);
         }
 
         [HttpGet("ProjectsWithEmployees")]
         public IActionResult GetProjectsWithEmployees()
         {
-            var result = new List<dynamic>();
-
-            using (MySqlConnection connection = new MySqlConnection(_connectionString))
-            {
-                string query = @"SELECT p.ProjectName, e.FirstName, e.LastName 
-                                 FROM Projects p
-                                 JOIN Tasks t ON p.ProjectID = t.ProjectID
-                                 JOIN Employees e ON t.AssignedTo = e.EmployeeID";
-
-                MySqlCommand command = new MySqlCommand(query, connection);
-                connection.Open();
-
-                using (var reader = command.ExecuteReader())
+            var projects = _context.Projects
+                .Select(p => new
                 {
-                    while (reader.Read())
+                    p.ProjectName,
+                    Employees = p.Tasks.Select(t => new
                     {
-                        dynamic project = new ExpandoObject();
-                        project.ProjectName = reader.GetString("ProjectName");
-                        project.FirstName = reader.GetString("FirstName");
-                        project.LastName = reader.GetString("LastName");
+                        t.AssignedToNavigation.FirstName,
+                        t.AssignedToNavigation.LastName
+                    })
+                })
+                .ToList();
 
-                        result.Add(project);
-                    }
-                }
-            }
-            return Ok(result);
+            return Ok(projects);
         }
 
         [HttpGet("ProfitForCurrentMonth")]
         public IActionResult GetProfitForCurrentMonth()
         {
-            dynamic result = new ExpandoObject();
+            var totalInvoices = _context.Invoices
+                .Where(i => i.InvoiceDate.Year == DateTime.Now.Year &&
+                            i.InvoiceDate.Month == DateTime.Now.Month)
+                .Sum(i => (decimal?)i.TotalAmount) ?? 0;
 
-            using (MySqlConnection connection = new MySqlConnection(_connectionString))
-            {
-                string query = @"
-                    SELECT IFNULL(SUM(i.TotalAmount), 0) AS TotalInvoices, IFNULL(SUM(a.Value), 0) AS TotalAssets, IFNULL(SUM(i.TotalAmount), 0) - IFNULL(SUM(a.Value), 0) AS Profit FROM Invoices i LEFT JOIN Assets a ON 1 = 1 WHERE YEAR(i.InvoiceDate) = YEAR(CURRENT_DATE) AND MONTH(i.InvoiceDate) = MONTH(CURRENT_DATE);
-";
+            var totalAssets = _context.Assets.Sum(a => (decimal?)a.Value) ?? 0;
+            var profit = totalInvoices - totalAssets;
 
-                MySqlCommand command = new MySqlCommand(query, connection);
-                connection.Open();
-                using (var reader = command.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-                        result.TotalInvoices = reader.GetDecimal("TotalInvoices");
-                        result.TotalAssets = reader.GetDecimal("TotalAssets");
-                        result.Profit = reader.GetDecimal("Profit");
-                    }
-                }
-            }
-
-            return Ok(result);
+            return Ok(new { TotalInvoices = totalInvoices, TotalAssets = totalAssets, Profit = profit });
         }
+
         [HttpGet("SalariesWithEmployees")]
         public IActionResult GetSalariesWithEmployees()
         {
-            var result = new List<dynamic>();
-
-            using (MySqlConnection connection = new MySqlConnection(_connectionString))
-            {
-                string query = @"SELECT e.FirstName, e.LastName, s.MonthlySalary, s.PaymentDate 
-                                 FROM Salaries s
-                                 JOIN Employees e ON s.EmployeeID = e.EmployeeID";
-
-                MySqlCommand command = new MySqlCommand(query, connection);
-                connection.Open();
-
-                using (var reader = command.ExecuteReader())
+            var salaries = _context.Salaries
+                .Include(s => s.Employee)
+                .Select(s => new
                 {
-                    while (reader.Read())
-                    {
-                        dynamic salary = new ExpandoObject();
-                        salary.FirstName = reader.GetString("FirstName");
-                        salary.LastName = reader.GetString("LastName");
-                        salary.MonthlySalary = reader.GetDecimal("MonthlySalary");
-                        salary.PaymentDate = reader.GetDateTime("PaymentDate");
+                    s.Employee.FirstName,
+                    s.Employee.LastName,
+                    s.MonthlySalary,
+                    s.PaymentDate
+                })
+                .ToList();
 
-                        result.Add(salary);
-                    }
-                }
-            }
-            return Ok(result);
+            return Ok(salaries);
         }
 
         [HttpGet("TasksWithProjects")]
         public IActionResult GetTasksWithProjects()
         {
-            var result = new List<dynamic>();
-
-            using (MySqlConnection connection = new MySqlConnection(_connectionString))
-            {
-                string query = @"SELECT t.TaskName, p.ProjectName, e.FirstName, e.LastName 
-                                 FROM Tasks t
-                                 JOIN Projects p ON t.ProjectID = p.ProjectID
-                                 JOIN Employees e ON t.AssignedTo = e.EmployeeID";
-
-                MySqlCommand command = new MySqlCommand(query, connection);
-                connection.Open();
-
-                using (var reader = command.ExecuteReader())
+            var tasks = _context.Tasks
+                .Include(t => t.Project)
+                .Include(t => t.AssignedToNavigation)
+                .Select(t => new
                 {
-                    while (reader.Read())
-                    {
-                        dynamic task = new ExpandoObject();
-                        task.TaskName = reader.GetString("TaskName");
-                        task.ProjectName = reader.GetString("ProjectName");
-                        task.FirstName = reader.GetString("FirstName");
-                        task.LastName = reader.GetString("LastName");
+                    t.TaskName,
+                    t.Project.ProjectName,
+                    t.AssignedToNavigation.FirstName,
+                    t.AssignedToNavigation.LastName
+                })
+                .ToList();
 
-                        result.Add(task);
-                    }
-                }
-            }
-            return Ok(result);
+            return Ok(tasks);
         }
     }
 }

@@ -11,4 +11,7 @@ public class Task
     public int AssignedTo { get; set; }
     public string Status { get; set; }
     public DateTime DueDate { get; set; }
+    
+    public Project Project { get; set; }   
+    public Employee AssignedToNavigation { get; set; }
 }
